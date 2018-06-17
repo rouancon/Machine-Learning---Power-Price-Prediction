@@ -1,6 +1,8 @@
 ﻿#imports
 from keras.models import Model
-from keras.layers import Input, Dense
+from keras.layers import Input, Dense, LSTM, Activation, Embedding
+from keras.models import Sequential
+from keras import losses
 import xlrd
 import numpy as np
 
@@ -74,12 +76,21 @@ while (not done):
         done=True
         load2017=np.array(load2017)
 
-#define model
-a = Input(shape=(32,))
-b = Dense(32)(a)
-model = Model(inputs=a, outputs=b)
 
+#----------DEFINE MODEL------------
+model = Sequential()
+model.add(LSTM(32, input_shape=(8760, 1)))
+model.add(Dense(8760))
+model.compile(loss='mse', optimizer='rmsprop')
 
-model.compile(loss='mean_squared_error', optimizer='RMSprop')
-model.fit(x=load2015, y=price2015, epochs=5, batch_size=32, verbose=2, validation_split=0, validation_data=(load2016,price2016), shuffle=True)
-model.predict(x=load2017)
+#train and validate model
+load2015 = np.reshape(load2015, (1,8760,1))
+load2016 = np.reshape(load2016, (1,8760,1))
+load2017 = np.reshape(load2017, (1,8760,1))
+price2015 = np.reshape(price2015, (1,8760))
+price2016 = np.reshape(price2016, (1,8760))
+model.fit(x=load2015, y=price2015, epochs=10, batch_size=32, verbose=2, validation_split=0, validation_data=(load2016,price2016), shuffle=True)
+
+#model results
+result = model.predict(x=load2017)
+print(result)
